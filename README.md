@@ -56,18 +56,5 @@ RINGS | prostate | H&E | [data](https://data.mendeley.com/datasets/h8bdwrtnr5/1)
 TNBC | Breast | H&E | [data](https://peterjacknaylor.github.io/data/), [data](https://drive.google.com/drive/folders/1taB8boGyycjV4X1a2vCIAV9fwMxFSS41), [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8438559) | 50 images, 4022 cells (11 patients) | images + nuclei seg + label | seg + classi | patch (512x512) | 40x - Philips Ultra Fast Scanner (Curie Inst.) | 2019
 
 # Author
-1.	Hansheng Li,  lihansheng@nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-2.	Zhengyang Xu, fy1999xu@gmail.com, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-3.	Yuting Zhong, zhongyuting@stu.nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-4.	Mengdi Yan, 202010292@stumail.nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-5.	Yuxin Kang, yuxinkang@yulinu.edu.cn, Yulin University, Department of Information Engineering
-6.	Chunbao Wang, bingliziliao2015@163.com, Department of Pathology, The First Affiliated Hospital of Xi’an Jiaotong University, Xi’an, Shaanxi, China
-7.	Qirong Bo, boqirong@nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-8.	Jun Feng, fengjun@nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-9.	Lin Yang, linyang@nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
-10.	Wentao Yang, yangwt2000@163.com, Fudan University, Shanghai, China
-11.	Yuting Wen, 65171495@gq.com, Department of Pathology, the Ninth Hospital of Xi 'an, Shaanxi, China
-12.	Yi Wang, wy112421xbb@163.com, Department of Pathology, the Ninth Hospital of Xi 'an, Shaanxi, China
-13.	Xianxu Zeng, xianxu77@163.com, Department of Pathology, The Third Affiliated Hospital of Zhengzhou University, Zhengzhou, Henan, China
-14.	Lei Cui, leicui@nwu.edu.cn, School of Information Science and Technology, Northwest University, Xi’an, Shaanxi, China
+Anonym
 
