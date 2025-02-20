@@ -1,3 +1,5 @@
+import argparse
+
 import os
 import cv2
 import h5py
@@ -33,11 +35,22 @@ import h5py
 
 transforms = transforms.Compose([
     transforms.ToTensor(),
-    # transforms.Resize((512,512)),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
     
 ])
 
+def get_arguments():
+    parser = argparse.ArgumentParser(description="PathUniDet")
+
+    parser.add_argument("--dataset_dir", type=str, default='/media/ipmi2022/SCSI_all/universal_data', help="your training dataset path for all tasks")
+    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--epochs", type=int, default=2000)
+    parser.add_argument("--dataset_num", type=int, default=11)
+    parser.add_argument("--sampling", type=int, default=30,help="sampling images per epoch for each dataset")
+
+
+
+    return parser
 
 
 def load_dataset(uni_folder):
@@ -211,123 +224,128 @@ class DataLoader(SlimDataLoaderBase):
         return data,heatmap,num_class,selected_keys
 
 
-patch_size=512
-uni_dataset=load_dataset('/media/ipmi2022/SCSI_all/xuzhengyang/universal_data')
-train_uni_dataset,test_uni_dataset,train_dataset_len=split_dataset(uni_dataset)
-data_generator=DataLoader(train_uni_dataset,batch_size=1,train_dataset_len=train_dataset_len,transforms=transforms)
+def main():
 
-heads={'seg':15,'kp':4 ,'hm': 4, 'wh': 2, 'reg': 2}
-unet=DLASeg('dla60', heads,
-                 pretrained=True,
-                 down_ratio=2,
-                 head_conv=256).cuda()
+    parser = get_arguments()
+    print(parser)
 
-unet.train()
+    args = parser.parse_args()
 
-optimizer = torch.optim.Adam(unet.parameters(), lr=0.0001)
-
-
-epochs=2000
-for epoch in tqdm(range(1,epochs),desc='Epoch'):
-    mean_loss=0
-    mean_ce=0
-    mean_dice=0
-   
-    for it in tqdm(range(30*11)):
-        data,heatmap,num_class,selected_keys = next(data_generator)
-        optimizer.zero_grad()
-
-        data=data.cuda()
-        B,_,_,_=data.shape
-                
-        
-        out=unet.forward(data,selected_keys)
-        out=out[:,:num_class]
-        out=F.softmax(out,dim=1)
-        loss=0
-        cross=0
-        dice=0
-        
-        for batch in range(B):
-            out_batch=out[batch:batch+1]
-            heatmap_batch=heatmap[batch].reshape(1,num_class,heatmap[batch].shape[1],heatmap[batch].shape[2])
-            heatmap_batch=heatmap_batch.cuda()
-
-
-            if out_batch.shape[2]==heatmap_batch.shape[2] and out_batch.shape[3]==heatmap_batch.shape[3]:
-
-                if selected_keys in (0,1,2,3,4,5,9,10):
-                    batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
-                elif selected_keys in (6,7,8):
-                    batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
-                loss=loss+batch_loss
-                cross=cross+batch_cross
-                dice=dice+batch_dice
-
-            else:
-                pad_width=out_batch.shape[2]-heatmap_batch.shape[2]
-                if pad_width%2==0:
-                    pad_left=int(pad_width/2)
-                    pad_right=int(pad_width/2)
-                    left=int(pad_left)
-                    right=int(heatmap_batch.shape[2]+pad_right)
+    patch_size=512
+    uni_dataset=load_dataset('/media/ipmi2022/SCSI_all/xuzhengyang/universal_data')
+    train_uni_dataset,test_uni_dataset,train_dataset_len=split_dataset(uni_dataset)
+    data_generator=DataLoader(train_uni_dataset,batch_size=args.batch_size,train_dataset_len=train_dataset_len,transforms=transforms)
+    
+    heads={'seg':15,'kp':4 ,'hm': 4, 'wh': 2, 'reg': 2}
+    unet=DLASeg('dla60', heads,
+                     pretrained=True,
+                     down_ratio=2,
+                     head_conv=256).cuda()
+    
+    unet.train()
+    
+    optimizer = torch.optim.Adam(unet.parameters(), lr=0.0001)
+    
+    
+    epochs=args.epochs
+    for epoch in tqdm(range(1,epochs),desc='Epoch'):
+        mean_loss=0
+        mean_ce=0
+        mean_dice=0
+       
+        for it in tqdm(range(args.sampling*args.dataset_num)):
+            data,heatmap,num_class,selected_keys = next(data_generator)
+            optimizer.zero_grad()
+    
+            data=data.cuda()
+            B,_,_,_=data.shape
+                    
+            
+            out=unet.forward(data,selected_keys)
+            out=out[:,:num_class]
+            out=F.softmax(out,dim=1)
+            loss=0
+            cross=0
+            dice=0
+            
+            for batch in range(B):
+                out_batch=out[batch:batch+1]
+                heatmap_batch=heatmap[batch].reshape(1,num_class,heatmap[batch].shape[1],heatmap[batch].shape[2])
+                heatmap_batch=heatmap_batch.cuda()
+    
+    
+                if out_batch.shape[2]==heatmap_batch.shape[2] and out_batch.shape[3]==heatmap_batch.shape[3]:
+    
+                    if selected_keys in (0,1,2,3,4,5,9,10):
+                        batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
+                    elif selected_keys in (6,7,8):
+                        batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
+                    loss=loss+batch_loss
+                    cross=cross+batch_cross
+                    dice=dice+batch_dice
+    
                 else:
-                    pad_left=int(pad_width/2)
-                    pad_right=int(1+pad_width/2)
-                    left=int(pad_left)
-                    right=int(heatmap_batch.shape[2]+pad_right)-1
-
-                pad_height=out_batch.shape[3]-heatmap_batch.shape[3]
-                if pad_height%2==0:
-                    pad_up=int(pad_height/2)
-                    pad_down=int(pad_height/2)
-                    down=int(pad_down)
-                    up=int(heatmap_batch.shape[3]+pad_up)
-                else:
-                    pad_up=int(pad_height/2)
-                    pad_down=int(1+pad_height/2)
-                    down=int(pad_down)
-                    up=int(heatmap_batch.shape[3]+pad_up)+1
-
-
-                out_batch=out_batch[:,:,left:right,down:up]
-                heatmap_batch=heatmap_batch.type(torch.int64)
-
-                if selected_keys in (0,1,2,3,4,5,9,10):
-                    batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
-                elif selected_keys in (6,7,8):
-                    batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
-                loss=loss+batch_loss
-                cross=cross+batch_cross
-                dice=dice+batch_dice
-
-
-
-        loss=loss/B
-        cross=cross/B
-        dice=dice/B
-        loss.backward()
-        optimizer.step()
-        mean_loss=mean_loss+loss
-        mean_ce=mean_ce+cross
-        mean_dice=mean_dice+dice
-        
-        del data, heatmap, num_class, selected_keys
-        gc.collect()
-    mean_loss=mean_loss/330
-    mean_ce=mean_ce/330
-    mean_dice=mean_dice/330
-
-    tqdm.write(f"Epoch {epoch}: Loss={mean_loss:.4f}, cross entropy={mean_ce:.4f}, dice={mean_dice:.4f}")
-    with open('/media/ipmi2022/Elements/backup/xuzhengyang/code/universal_model/universal_segmantation/loss.txt', 'a') as log_file:
-        log_file.write(f"Epoch {epoch}: Loss={mean_loss:.4f}, cross entropy={mean_ce:.4f}, dice={mean_dice:.4f}\n")
-    if epoch%50==0 and epoch!=0:
-        now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-        save_name=f'unet_time_newdata_{now}_epoch_{epoch}.pkl'
-        torch.save(unet.state_dict(), save_name)
-
-
-
-now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-save_name=f'unet_time_newdata_{now}_final.pkl'
-torch.save(unet.state_dict(), save_name)
+                    pad_width=out_batch.shape[2]-heatmap_batch.shape[2]
+                    if pad_width%2==0:
+                        pad_left=int(pad_width/2)
+                        pad_right=int(pad_width/2)
+                        left=int(pad_left)
+                        right=int(heatmap_batch.shape[2]+pad_right)
+                    else:
+                        pad_left=int(pad_width/2)
+                        pad_right=int(1+pad_width/2)
+                        left=int(pad_left)
+                        right=int(heatmap_batch.shape[2]+pad_right)-1
+    
+                    pad_height=out_batch.shape[3]-heatmap_batch.shape[3]
+                    if pad_height%2==0:
+                        pad_up=int(pad_height/2)
+                        pad_down=int(pad_height/2)
+                        down=int(pad_down)
+                        up=int(heatmap_batch.shape[3]+pad_up)
+                    else:
+                        pad_up=int(pad_height/2)
+                        pad_down=int(1+pad_height/2)
+                        down=int(pad_down)
+                        up=int(heatmap_batch.shape[3]+pad_up)+1
+    
+    
+                    out_batch=out_batch[:,:,left:right,down:up]
+                    heatmap_batch=heatmap_batch.type(torch.int64)
+    
+                    if selected_keys in (0,1,2,3,4,5,9,10):
+                        batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
+                    elif selected_keys in (6,7,8):
+                        batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
+                    loss=loss+batch_loss
+                    cross=cross+batch_cross
+                    dice=dice+batch_dice
+    
+    
+    
+            loss=loss/B
+            cross=cross/B
+            dice=dice/B
+            loss.backward()
+            optimizer.step()
+            mean_loss=mean_loss+loss
+            mean_ce=mean_ce+cross
+            mean_dice=mean_dice+dice
+            
+            del data, heatmap, num_class, selected_keys
+            gc.collect()
+        mean_loss=mean_loss/args.sampling*args.dataset_num
+        mean_ce=mean_ce/args.sampling*args.dataset_num
+        mean_dice=mean_dice/args.sampling*args.dataset_num
+    
+        tqdm.write(f"Epoch {epoch}: Loss={mean_loss:.4f}, cross entropy={mean_ce:.4f}, dice={mean_dice:.4f}")
+        if epoch%50==0 and epoch!=0:
+            now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+            save_name=f'unet_time_newdata_{now}_epoch_{epoch}.pkl'
+            torch.save(unet.state_dict(), save_name)
+    
+    
+    
+    now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+    save_name=f'unet_time_newdata_{now}_final.pkl'
+    torch.save(unet.state_dict(), save_name)
