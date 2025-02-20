@@ -25,7 +25,7 @@ Pretrained weight is released:
 [GoogleDrive](https://drive.google.com/file/d/1U7FllAAiGbi8iTQ6gXl9ZyoR6m3trQVC/view?usp=sharing)
 
 ### Model training and test
-To training a model, set related parameters and run `python dataset_loading_dodnet_newdataset.py`
+To training a model, set related parameters and run `python train.py`
 
 To evaluate the trained model on the test set,  run `python caculate_metric_newdataset.py` for segmentation, `python caculate_metric_newdataset_detection.py` for single-class cell detection and `python caculate_metric_newdataset_ki67.py` for ki67 detection. 
 
