@@ -22,7 +22,7 @@ We set up a folder for all tasks, and within this folder, each task is stored in
 
 ### Pretrained weight: 
 Pretrained weight is released:
-[GoogleDrive](https://drive.google.com/drive/folders/1izOFT7n4831uutTplyBVGX6WUaj1Mgux?usp=drive_link)
+[GoogleDrive](https://drive.google.com/file/d/1U7FllAAiGbi8iTQ6gXl9ZyoR6m3trQVC/view?usp=sharing)
 
 ### Model training and test
 To training a model, set related parameters and run `python dataset_loading_dodnet_newdataset.py`
