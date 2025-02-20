@@ -27,6 +27,8 @@ Pretrained weight is released:
 ### Model training and test
 To training a model, set related parameters and run `python train.py`
 
+if you want to train this model with your own datasets, you need to reset the name of each tasks, like: `list_of_keys=['task01_camelyon','task02_Her2_region','task03_Gland','task04_PanNuke','task05_ConSep','task06_lizard','task07_HP','task08_Ki67','task09_MBM','task10_Her2','task11_nuclei']`, the task ID was generate automatically based on the sequence.
+
 To evaluate the trained model on the test set,  run `python caculate_metric_newdataset.py` for segmentation, `python caculate_metric_newdataset_detection.py` for single-class cell detection and `python caculate_metric_newdataset_ki67.py` for ki67 detection. 
 
 the model weight is "model.pkl"
