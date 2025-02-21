@@ -160,15 +160,12 @@ def calculate_f1_score(Tr, Tp, Tg):
 def padImage(img, target_height, target_width):
     _, h, w = img.shape
 
-    # 计算垂直方向的填充量，如果差值为奇数，底部会多1
     pad_top = max(0, (target_height - h) // 2)
     pad_bottom = max(0, target_height - h - pad_top)
 
-    # 计算水平方向的填充量，如果差值为奇数，右边会多1
     pad_left = max(0, (target_width - w) // 2)
     pad_right = max(0, target_width - w - pad_left)
 
-    # 使用填充量对图像进行填充
     padded_img = np.pad(img, ((0, 0),(pad_top, pad_bottom), (pad_left, pad_right) ), mode='constant')
 
     return padded_img
@@ -191,10 +188,10 @@ def slideCropF1(img, mask,num_class):
 def normSlideCropF1(img, mask,num_class):  # H>512,W>512
     # print(img.shape)
     _, H, W = img.shape
-    m = H // 512  # img在width能整切多少
-    n = W // 512  # img在height能整切多少
+    m = H // 512  
+    n = W // 512 
     h_reminder = H % 512
-    w_reminder = W % 512  # 以 3044 x 2018 为例，m=5,n=3,h_r=484,w_r=482
+    w_reminder = W % 512  
     
 
     stride = 512
@@ -202,26 +199,24 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
     Tp = 0
     Tg = 0
 
-    for i in range(0, m + 1):  # height。 0、1、2、3、4是整切块，5是边缘切块
-        for j in range(0, n + 1):  # width。  0、1、2是整切块，3是边缘切块
-            # 1.先切割：分4种情况
-            # 2.输入patch，得到 out
-            # 3.比较 out与 mask，计算TP、FP、FN
+    for i in range(0, m + 1):  
+        for j in range(0, n + 1): 
+            
             if i < m and j < n:
                 patch = img[:, i * stride:(i + 1) * stride, j * stride:(j + 1) * stride]
                 patch_mask = mask[:, i * stride:(i + 1) * stride, j * stride:(j + 1) * stride]
 
                 # patch = torch.Tensor(patch)
-                patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+                patch = torch.Tensor(patch).cuda() 
                 patch = patch.squeeze(0)  # 1,3,512,512
-                patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+                patch_mask = torch.Tensor(patch_mask).cuda() 
                 # DoDnet:
                 patch = patch.repeat(4, 1, 1, 1).cuda()
                 with torch.no_grad():
                     out = unet.forward(patch, task_id)
                 out=out[:,:num_class]
                 out=F.softmax(out,dim=1)
-                out = out[0:1]  # 送网络后，不用切割，直接比较
+                out = out[0:1] 
 
                 out = out.cpu()
                 patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -238,13 +233,13 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                 Tp += predict_num
                 Tg += gt_num
 
-            if w_reminder != 0 and j == n and i < m:  # 当行不能被整切时，才从最后重合切一块
-                patch = img[:, i * stride:(i + 1) * stride, W - stride:W]  # patch需要 512 x 512
-                patch_mask = mask[:, i * stride:(i + 1) * stride, W - w_reminder:W]  # mask保持不变
+            if w_reminder != 0 and j == n and i < m:  
+                patch = img[:, i * stride:(i + 1) * stride, W - stride:W]  
+                patch_mask = mask[:, i * stride:(i + 1) * stride, W - w_reminder:W] 
 
-                patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+                patch = torch.Tensor(patch).cuda()
                 patch = patch.squeeze(0)  # 1,3,512,512
-                patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+                patch_mask = torch.Tensor(patch_mask).cuda() 
 
                 # DoDnet:
                 patch = patch.repeat(4, 1, 1, 1).cuda()
@@ -253,8 +248,7 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                 out=out[:,:num_class]
                 out=F.softmax(out,dim=1)
                 out = out[0:1]
-                out = out[:,:, :, 512 - w_reminder:512]  # 裁剪成与mask一致的大小、位置
-
+                out = out[:,:, :, 512 - w_reminder:512]  
                 out = out.cpu()
                 patch_mask = patch_mask.unsqueeze(0).cpu()
 
@@ -266,14 +260,13 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                 Tp += predict_num
                 Tg += gt_num
 
-            if h_reminder != 0 and i == m and j < n:  # 当列不能被整切时，才从最后重合切一块
+            if h_reminder != 0 and i == m and j < n: 
                 patch = img[:, H - stride:H, j * stride:(j + 1) * stride]
                 patch_mask = mask[:, H - h_reminder:H, j * stride:(j + 1) * stride]
 
-                patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+                patch = torch.Tensor(patch).cuda() 
                 patch = patch.squeeze(0)  # 1,3,512,512
-                patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
-
+                patch_mask = torch.Tensor(patch_mask).cuda() 
                 # DoDnet:
                 patch = patch.repeat(4, 1, 1, 1).cuda()
                 with torch.no_grad():
@@ -281,7 +274,7 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                 out=out[:,:num_class]
                 out=F.softmax(out,dim=1)
                 out = out[0:1]
-                out = out[:, :, 512 - h_reminder:512, :]  # 裁剪成与mask一致的大小、位置
+                out = out[:, :, 512 - h_reminder:512, :]  
 
                 out = out.cpu()
                 patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -299,9 +292,9 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                 patch_mask = mask[:, H - h_reminder:H, W - w_reminder:W]
                 # print(patch.shape)
 
-                patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+                patch = torch.Tensor(patch).cuda()  
                 patch = patch.squeeze(0)  # 1,3,512,512
-                patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+                patch_mask = torch.Tensor(patch_mask).cuda() 
 
                 # DoDnet:
                 patch = patch.repeat(4, 1, 1, 1).cuda() # 4,3,512,512
@@ -309,8 +302,8 @@ def normSlideCropF1(img, mask,num_class):  # H>512,W>512
                     out = unet.forward(patch, task_id)
                 out=out[:,:num_class]
                 out=F.softmax(out,dim=1)
-                out = out[0:1]  # 1,3,512,512   送网络后，需要将最后一块的公共部分切割之后比较
-                out = out[:, :, 512 - h_reminder:512, 512 - w_reminder:512]  # 裁剪成与mask一致的大小、位置
+                out = out[0:1]  
+                out = out[:, :, 512 - h_reminder:512, 512 - w_reminder:512]  
 
                 out = out.cpu()
                 # print(out.shape)
@@ -334,21 +327,20 @@ def paddingSlideCropF1_1(img, mask,num_class):  # H>=512,W<512
     Tp = 0
     Tg = 0
     _, H, W = img.shape
-    paddingLen = 512 - W  # 在W上填充了多少
+    paddingLen = 512 - W 
     half_r = paddingLen // 2
 
     m = H // 512
     reminder = H % 512
-    img_padding = padImage(img, H, 512)  # 填充为 H x 512大小
-
+    img_padding = padImage(img, H, 512) 
     for i in range(0, m + 1):
         if i < m:
             patch = img_padding[:, i * 512:(i + 1) * 512, :]
             patch_mask = mask[:, i * 512:(i + 1) * 512, :]
 
-            patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+            patch = torch.Tensor(patch).cuda()  
             patch = patch.squeeze(0)  # 1,3,512,512
-            patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+            patch_mask = torch.Tensor(patch_mask).cuda() 
 
             # DoDnet:
             patch = patch.repeat(4, 1, 1, 1).cuda()
@@ -357,7 +349,7 @@ def paddingSlideCropF1_1(img, mask,num_class):  # H>=512,W<512
             out=out[:,:num_class]
             out=F.softmax(out,dim=1)
             out = out[0:1]
-            out = out[:, :, :, half_r:half_r + W]  # 将padding后的部分切除再比较
+            out = out[:, :, :, half_r:half_r + W] 
 
             out = out.cpu()
             patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -374,9 +366,9 @@ def paddingSlideCropF1_1(img, mask,num_class):  # H>=512,W<512
             patch = img_padding[:, H - 512:H, :]
             patch_mask = mask[:, H - reminder:H, :]
 
-            patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+            patch = torch.Tensor(patch).cuda() 
             patch = patch.squeeze(0)  # 1,3,512,512
-            patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+            patch_mask = torch.Tensor(patch_mask).cuda()
 
             # DoDnet:
             patch = patch.repeat(4, 1, 1, 1).cuda()
@@ -385,7 +377,7 @@ def paddingSlideCropF1_1(img, mask,num_class):  # H>=512,W<512
             out=out[:,:num_class]
             out=F.softmax(out,dim=1)
             out = out[0:1]
-            out = out[:, :, 512 - reminder:512, half_r:half_r + W]  # 将padding后的部分、重合部分切除再比较
+            out = out[:, :, 512 - reminder:512, half_r:half_r + W]  
 
             out = out.cpu()
             patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -412,7 +404,7 @@ def paddingSlideCropF1_2(img, mask,num_class):  # H<512 , W>=512
     Tp = 0
     Tg = 0
     _, H, W = img.shape
-    paddingLen = 512 - H  # 在H上填充了多少
+    paddingLen = 512 - H 
     half_r = paddingLen // 2
 
     m = W // 512
@@ -424,9 +416,9 @@ def paddingSlideCropF1_2(img, mask,num_class):  # H<512 , W>=512
             patch = img_padding[:, :, i * 512:(i + 1) * 512]
             patch_mask = mask[:, :, i * 512:(i + 1) * 512]
 
-            patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+            patch = torch.Tensor(patch).cuda() 
             patch = patch.squeeze(0)  # 1,3,512,512
-            patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+            patch_mask = torch.Tensor(patch_mask).cuda()  
 
             # DoDnet:
             patch = patch.repeat(4, 1, 1, 1).cuda()
@@ -435,7 +427,7 @@ def paddingSlideCropF1_2(img, mask,num_class):  # H<512 , W>=512
             out=out[:,:num_class]
             out=F.softmax(out,dim=1)
             out = out[0:1]
-            out = out[:, :, half_r:half_r + H, :]  # 将padding后的部分切除再比较
+            out = out[:, :, half_r:half_r + H, :] 
 
             out = out.cpu()
             patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -452,9 +444,9 @@ def paddingSlideCropF1_2(img, mask,num_class):  # H<512 , W>=512
             patch = img_padding[:, :, W - 512:W]
             patch_mask = mask[:, :, W - reminder:W]
 
-            patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+            patch = torch.Tensor(patch).cuda()  
             patch = patch.squeeze(0)  # 1,3,512,512
-            patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+            patch_mask = torch.Tensor(patch_mask).cuda() 
 
             # DoDnet:
             patch = patch.repeat(4, 1, 1, 1).cuda()
@@ -463,7 +455,7 @@ def paddingSlideCropF1_2(img, mask,num_class):  # H<512 , W>=512
             out=out[:,:num_class]
             out=F.softmax(out,dim=1)
             out = out[0:1]
-            out = out[:, :, half_r:half_r + H, 512 - reminder:512]  # 将padding后的部分、重合部分切除再比较
+            out = out[:, :, half_r:half_r + H, 512 - reminder:512]  
 
             out = out.cpu()
             patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -498,19 +490,19 @@ def paddingSlideCropF1_3(img, mask,num_class):
 
     patch = padImage(patch, 512, 512)
 
-    patch = torch.Tensor(patch).cuda()  # 将 patch 移动到 GPU 上
+    patch = torch.Tensor(patch).cuda()  
     patch = patch.squeeze(0)  # 1,3,512,512
-    patch_mask = torch.Tensor(patch_mask).cuda()  # 将 patch_mask 移动到 GPU 上
+    patch_mask = torch.Tensor(patch_mask).cuda()  
 
     # DoDnet:
-    #patch = torch.cat([torch.from_numpy(patch)] * 4, dim=1).cuda()  # 将 patch 在通道维度上堆叠四次
+    #patch = torch.cat([torch.from_numpy(patch)] * 4, dim=1).cuda() 
     patch = patch.repeat(4, 1, 1, 1).cuda()
     with torch.no_grad():
         out = unet.forward(patch, task_id)
     out=out[:,:num_class]
     out=F.softmax(out,dim=1)
     out = out[0:1]
-    out = out[:, :, halfPadLen_H:halfPadLen_H + H, halfPadLen_W:halfPadLen_W + W]  # 将padding后的部分、重合部分切除再比较
+    out = out[:, :, halfPadLen_H:halfPadLen_H + H, halfPadLen_W:halfPadLen_W + W]  
 
     out = out.cpu()
     patch_mask = patch_mask.unsqueeze(0).cpu()
@@ -572,7 +564,6 @@ for dataset in datasets:
     for folder1 in os.listdir(img_folder):
         img_path=os.path.join(img_folder,folder1)
 
-        # 提取图像ID和数据集名称
         folder, num_id = os.path.split(img_path)
         num_id = num_id.replace('.jpg', '').replace('.png', '').replace('.tif', '').replace('.jpeg', '')
         folder, _ = os.path.split(folder)
@@ -580,27 +571,17 @@ for dataset in datasets:
         _, pkl_time = os.path.split(model_path)
         pkl_time = pkl_time.replace('.pkl', '')
 
-        # 构建结果保存路径
         store_name = f'{pkl_time}_datasetname_{dataset_name}_img_id_{num_id}.h5'
-        # 构建掩码路径
         h5_path = img_path.replace('img', 'ground_truth').replace('jpg', 'h5').replace('tif', 'h5').replace('png', 'h5').replace('jpeg', 'h5')
-        # 从HDF5文件中读取掩码数据
         with h5py.File(h5_path, 'r') as hf:
-            # 读取掩码数据为numpy数组
             heatmap = np.array(hf.get('heatmap'))
 
-        # 获取掩码的类别数和尺寸信息
         num_class, _, _ = heatmap.shape
 
-        # 读取图像
         images = Image.open(img_path)
 
-        # 进行图像预处理
-        # 将图像转换为Tensor
         images = transforms(images)
-        # 获取图像的尺寸信息
         _, H, W = images.shape
-        # 对图像和掩码进行裁剪
         f1,precision,recall = slideCropF1(images, heatmap,num_class)
         total_F1=total_F1+f1
         total_precision=total_precision+precision
@@ -614,8 +595,7 @@ for dataset in datasets:
     mean_precision=total_precision/cnt
     mean_recall=total_recall/cnt
     
-    # mean_IOU=total_IOU/cnt
-    # total_mean_IOU=torch.mean(mean_IOU[1:])
+
     
     print("{} :mean precision score is {}",dataset,mean_precision)
     print("{} :mean recall score is {}",dataset,mean_recall)
