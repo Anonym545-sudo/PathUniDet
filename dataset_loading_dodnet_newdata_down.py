@@ -56,7 +56,6 @@ def load_dataset(uni_folder):
         if not os.path.isdir(data_path):
             continue
         
-        #接下来遍历图片数据
         img_path=os.path.join(data_path,'img')
         h5_path=os.path.join(data_path,'ground_truth')
 
@@ -262,10 +261,8 @@ unet=DLASeg('dla34', heads,
 # model_path='/media/ipmi2022/Elements/backup/xuzhengyang/code/universal_model/universal_segmantation/unet_time_newdata_2024-11-20_04_50_22_epoch_3350.pkl'
 # model_state_dict=torch.load(model_path)
 
-# # 获取当前模型的状态字典
 # current_state_dict = unet.state_dict()
 
-# # 只更新形状相同的权重
 # for name, param in model_state_dict.items():
 #     if name in current_state_dict and current_state_dict[name].shape == param.shape:
 #         current_state_dict[name] = param
@@ -288,7 +285,7 @@ for epoch in tqdm(range(1,epochs),desc='Epoch'):
     mean_dice=0
     # print(epoch)
     # optimizer.zero_grad()
-    for it in tqdm(range(30*7)):#一共10个数据集，每个挑30个
+    for it in tqdm(range(30*7)):
         data,heatmap,num_class,selected_keys = next(data_generator)
         optimizer.zero_grad()
 
@@ -298,7 +295,7 @@ for epoch in tqdm(range(1,epochs),desc='Epoch'):
 #         print(selected_keys)
         
         
-        out=unet.forward(data,selected_keys)#注意num_class提出来了
+        out=unet.forward(data,selected_keys)
         out=out[:,:num_class]
         out=F.softmax(out,dim=1)
 #         
@@ -374,7 +371,7 @@ for epoch in tqdm(range(1,epochs),desc='Epoch'):
         mean_dice=mean_dice+dice
         
         del data, heatmap, num_class, selected_keys
-        gc.collect()  # 强制进行垃圾回收
+        gc.collect()  
         # print(loss)
         # # print(out.shape)
     mean_loss=mean_loss/210
