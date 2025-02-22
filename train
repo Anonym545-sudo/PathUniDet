@@ -47,6 +47,28 @@ def get_arguments():
     parser.add_argument("--epochs", type=int, default=2000)
     parser.add_argument("--dataset_num", type=int, default=11)
     parser.add_argument("--sampling", type=int, default=30,help="sampling images per epoch for each dataset")
+    parser.add_argument(
+    "--tasks",
+    type=str,
+    nargs='+', 
+    default=[
+        'task01_camelyon', 'task02_Her2_region', 'task03_Gland',
+        'task04_PanNuke', 'task05_ConSep', 'task06_lizard',
+        'task07_HP', 'task08_Ki67', 'task09_MBM', 'task10_Her2', 'task11_nuclei'
+    ],
+    )
+    parser.add_argument(
+        "--seg_num",
+        type=str,
+        default="(0,1,2,3,4,5,9,10)",
+        help="List of task indices in the form of (0,1,2,3,4,5,9,10)"
+    )
+    parser.add_argument(
+        "--det_num",
+        type=str,
+        default="(0,1,2,3,4,5,9,10)",
+        help="List of task indices in the form of (0,1,2,3,4,5,9,10)"
+    )
 
 
 
@@ -56,7 +78,7 @@ def get_arguments():
 def load_dataset(uni_folder):
     
     uni_dataset=OrderedDict()
-    task=['task01_camelyon','task02_Her2_region','task03_Gland','task04_PanNuke','task05_ConSep','task06_lizard','task07_HP','task08_Ki67','task09_MBM','task10_Her2','task11_nuclei']
+    task=args.tasks
 
     for num in range(len(task)):
         data_path=os.path.join(uni_folder,task[num])
@@ -155,7 +177,7 @@ class DataLoader(SlimDataLoaderBase):
         super().__init__(data, batch_size, number_of_threads_in_multithreaded)
         self.batch_size=batch_size
         self.dataset=data
-        self.list_of_keys=['task01_camelyon','task02_Her2_region','task03_Gland','task04_PanNuke','task05_ConSep','task06_lizard','task07_HP','task08_Ki67','task09_MBM','task10_Her2','task11_nuclei']
+        self.list_of_keys=args.tasks
         self.task_id=[i for i in range(len(data.keys()))]
 
 
@@ -276,9 +298,9 @@ def main():
     
                 if out_batch.shape[2]==heatmap_batch.shape[2] and out_batch.shape[3]==heatmap_batch.shape[3]:
     
-                    if selected_keys in (0,1,2,3,4,5,9,10):
+                    if selected_keys in args.seg_num:
                         batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
-                    elif selected_keys in (6,7,8):
+                    elif selected_keys in args.det_num:
                         batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
                     loss=loss+batch_loss
                     cross=cross+batch_cross
@@ -313,9 +335,9 @@ def main():
                     out_batch=out_batch[:,:,left:right,down:up]
                     heatmap_batch=heatmap_batch.type(torch.int64)
     
-                    if selected_keys in (0,1,2,3,4,5,9,10):
+                    if selected_keys in args.seg_num:
                         batch_loss,batch_cross,batch_dice=cross_and_dice_loss(out_batch,heatmap_batch)
-                    elif selected_keys in (6,7,8):
+                    elif selected_keys in args.det_num:
                         batch_loss,batch_cross,batch_dice=CE_loss(out_batch,heatmap_batch)
                     loss=loss+batch_loss
                     cross=cross+batch_cross
