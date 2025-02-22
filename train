@@ -47,6 +47,8 @@ def get_arguments():
     parser.add_argument("--epochs", type=int, default=2000)
     parser.add_argument("--dataset_num", type=int, default=11)
     parser.add_argument("--sampling", type=int, default=30,help="sampling images per epoch for each dataset")
+    parser.add_argument("--model_path", type=str, help="the pretrained path, you can download in the link")
+    parser.add_argument("--lr", type=int, default=0.0001)
     parser.add_argument(
     "--tasks",
     type=str,
@@ -61,15 +63,14 @@ def get_arguments():
         "--seg_num",
         type=str,
         default="(0,1,2,3,4,5,9,10)",
-        help="List of task indices in the form of (0,1,2,3,4,5,9,10)"
+        help="the task number for segmentation tasks"
     )
     parser.add_argument(
         "--det_num",
         type=str,
-        default="(0,1,2,3,4,5,9,10)",
-        help="List of task indices in the form of (0,1,2,3,4,5,9,10)"
+        default="(6,7,8)",
+        help="the task number for detection tasks"
     )
-
 
 
     return parser
@@ -259,14 +260,25 @@ def main():
     data_generator=DataLoader(train_uni_dataset,batch_size=args.batch_size,train_dataset_len=train_dataset_len,transforms=transforms)
     
     heads={'seg':15,'kp':4 ,'hm': 4, 'wh': 2, 'reg': 2}
-    unet=DLASeg('dla60', heads,
+    unet=DLASeg('dla34', heads,
                      pretrained=True,
                      down_ratio=2,
                      head_conv=256).cuda()
     
     unet.train()
+    model_state_dict=torch.load(args.model_path)
+
+    current_state_dict = unet.state_dict()
     
-    optimizer = torch.optim.Adam(unet.parameters(), lr=0.0001)
+    for name, param in model_state_dict.items():
+        if name in current_state_dict and current_state_dict[name].shape == param.shape:
+            current_state_dict[name] = param
+        else:
+            print(f"Skipping {name} due to shape mismatch.")
+    
+    unet.load_state_dict(current_state_dict)
+    
+    optimizer = torch.optim.Adam(unet.parameters(), lr=args.lr)
     
     
     epochs=args.epochs
@@ -363,11 +375,11 @@ def main():
         tqdm.write(f"Epoch {epoch}: Loss={mean_loss:.4f}, cross entropy={mean_ce:.4f}, dice={mean_dice:.4f}")
         if epoch%50==0 and epoch!=0:
             now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-            save_name=f'unet_time_newdata_{now}_epoch_{epoch}.pkl'
+            save_name=f'PathUniDet_time_newdata_{now}_epoch_{epoch}.pkl'
             torch.save(unet.state_dict(), save_name)
     
     
     
     now=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-    save_name=f'unet_time_newdata_{now}_final.pkl'
+    save_name=f'PathUniDet_time_newdata_{now}_final.pkl'
     torch.save(unet.state_dict(), save_name)
