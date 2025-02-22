@@ -1,4 +1,4 @@
-# <p align=center>`PathUniDet: A Universal Framework for Scalable and Efficient Pathological Image Detection Across Diverse Tasks and Modalities`</p>
+# <p align=center>`PathUniDet: A universal detection model for efficient pathological image analysis across diverse tasks`</p>
 
 This repository contains the pytorch code for the paper:
 
