@@ -22,6 +22,8 @@ We set up a folder for all tasks, and within this folder, each task is stored in
 
 You can refer to ‘data_process‘ for appropriate transformations of your dataset.
 
+We have provided an example file in the ‘dataset’ folder to demonstrate how to organize the data and the final data format for your reference.
+
 ### Pretrained weight: 
 Pretrained weight is released:
 [GoogleDrive](https://drive.google.com/file/d/1U7FllAAiGbi8iTQ6gXl9ZyoR6m3trQVC/view?usp=sharing)
