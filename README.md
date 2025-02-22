@@ -27,13 +27,13 @@ Pretrained weight is released:
 [GoogleDrive](https://drive.google.com/file/d/1U7FllAAiGbi8iTQ6gXl9ZyoR6m3trQVC/view?usp=sharing)
 
 ### Model training and test
-To training a model, set related parameters and run `python train.py`
+To training a model, set related parameters and run 
+`python train.py --dataset_dir './dataset' --dataset_num 11 --model_path './model.pkl' --tasks task01_camelyon,task02_Her2_region,task03_Gland,task04_PanNuke,task05_ConSep,task06_lizard,task07_HP,task08_Ki67,task09_MBM,task10_Her2,task11_nuclei --seg_num "(0,1,2,3,4,5,9,10)" --det_num "(6,7,8)"`
 
-if you want to train this model with your own datasets, you need to reset the name of each tasks, like: `list_of_keys=['task01_camelyon','task02_Her2_region','task03_Gland','task04_PanNuke','task05_ConSep','task06_lizard','task07_HP','task08_Ki67','task09_MBM','task10_Her2','task11_nuclei']`, the task ID was generate automatically based on the sequence.
+if you want to train this model with your own datasets, you need to reset the name of each tasks for args.tasks, the task ID was generate automatically based on the sequence, then you need to set seg_num and det_num to tell model which task represents segmentation and detection, represently.
 
 To evaluate the trained model on the test set,  run `python caculate_metric_newdataset.py` for segmentation, `python caculate_metric_newdataset_detection.py` for single-class cell detection and `python caculate_metric_newdataset_ki67.py` for ki67 detection. 
 
-the model weight is "model.pkl"
 
 # Data Resources
 
