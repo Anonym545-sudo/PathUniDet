@@ -11,7 +11,8 @@ Pathological examination is the gold standard for diagnosing significant disease
 </p>
 
 ## Dependecies
-In the environment configuration, we primarily utilize `torch==1.7.1`.
+In the environment configuration, we primarily utilize `torch==1.7.1`, please using `pip install -r requirements.txt` to get the environment.
+
 
 ## Usage
 
