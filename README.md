@@ -20,6 +20,8 @@ Before training, you need to prepare the training images and ground truth for ea
 
 We set up a folder for all tasks, and within this folder, each task is stored in a separate subfolder. Each task folder contains an ‘img’ folder for storing images and a ‘ground_truth’ folder for storing annotations.
 
+You can refer to ‘data_process‘ for appropriate transformations of your dataset.
+
 ### Pretrained weight: 
 Pretrained weight is released:
 [GoogleDrive](https://drive.google.com/file/d/1U7FllAAiGbi8iTQ6gXl9ZyoR6m3trQVC/view?usp=sharing)
